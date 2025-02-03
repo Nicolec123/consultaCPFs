@@ -292,109 +292,158 @@ let currentPage = 1;
 const resultsPerPage = 3;
 let cpfsData = []; // Array para armazenar os dados da consulta
 
+// Esconde o campo de busca por CPF ao carregar a página
+document.getElementById("buscar-results").style.display = "none";
+
 document.getElementById('cnpjForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const cnpj = document.getElementById('cnpj').value;
-  const cpfInput  = document.getElementById('cpf').value;
-  const cpfList = cpfInput.split(",").map(cpf => cpf.trim()).filter(cpf => cpf !== "");
+    const cnpj = document.getElementById('cnpj').value;
+    const cpfInput = document.getElementById('cpf').value;
+    const cpfList = cpfInput.split(",").map(cpf => cpf.trim()).filter(cpf => cpf !== "");
 
-  const resultDiv = document.getElementById('result'); 
-  resultDiv.innerHTML = "<p>Carregando...</p>";
+    const resultDiv = document.getElementById('result'); 
+    resultDiv.innerHTML = "<p>Carregando...</p>";
 
-  try {
-    const authToken = await realizarLogin();
-    const response = await consultarCpfs(cnpj, cpfList, authToken);
+    try {
+        const authToken = await realizarLogin();
+        const response = await consultarCpfs(cnpj, cpfList, authToken);
 
-    if (response && response.length > 0) {  
-      cpfsData = response; // Armazena os resultados globais
-      currentPage = 1; // Reseta para a primeira página
-      renderResults(); // Chama a função para renderizar a primeira página
-    } else {
-      resultDiv.innerHTML = `<p style="color: red;">Nenhum CPF vinculado encontrado.</p>`;
-      document.getElementById('pagination').innerHTML = ""; // Remove a paginação caso não tenha resultados
+        if (response && response.length > 0) {  
+            cpfsData = response; // Armazena os resultados globais
+            currentPage = 1; // Reseta para a primeira página
+            renderResults(); // Chama a função para renderizar a primeira página
+
+            // Exibe o campo de busca por CPF
+            document.getElementById("buscar-results").style.display = "block";
+        } else {
+            resultDiv.innerHTML = `<p style="color: red;">Nenhum CPF vinculado encontrado.</p>`;
+            document.getElementById('pagination').innerHTML = ""; // Remove a paginação caso não tenha resultados
+            document.getElementById("buscar-results").style.display = "none"; // Esconde a busca
+        }
+
+        document.getElementById('cnpj').value = "";
+        document.getElementById('cpf').value = "";
+        document.getElementById('searchCpf').value = "";
+
+    } catch (error) {
+        console.error(error);
+        resultDiv.innerHTML = `<p style="color: red;">Erro ao consultar CPFs: ${error.message}</p>`;
     }
-
-    document.getElementById('cnpj').value = "";
-    document.getElementById('cpf').value = "";
-
-  } catch (error) {
-    console.error(error);
-    resultDiv.innerHTML = `<p style="color: red;">Erro ao consultar CPFs: ${error.message}</p>`;
-  }
 });
 
 // Função para renderizar os resultados com paginação
 function renderResults() {
-  const resultDiv = document.getElementById('result');
-  const paginationDiv = document.getElementById('pagination');
+    const resultDiv = document.getElementById('result');
+    const paginationDiv = document.getElementById('pagination');
 
-  // Calcula o início e o fim da página atual
-  const startIndex = (currentPage - 1) * resultsPerPage;
-  const endIndex = startIndex + resultsPerPage;
-  const currentResults = cpfsData.slice(startIndex, endIndex); // Pega apenas os itens da página atual
+    // Calcula o início e o fim da página atual
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+    const currentResults = cpfsData.slice(startIndex, endIndex); // Pega apenas os itens da página atual
 
-  if (currentResults.length === 0) {
-    resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
-    return;
-  }
-
-  // Renderiza os resultados da página atual
-  resultDiv.innerHTML = `
-    <p style="color: green;">Consulta realizada com sucesso!</p>
-    
-    <ul>
-      ${currentResults.map(cpfData => `
-        <li>
-          <p><strong>CPF:</strong> ${cpfData.cpf}</p>
-          <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
-          <p><strong>Status:</strong> ${cpfData.status}</p>
-          <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
-          <p><strong>Erros:</strong> ${cpfData.erros?.join(", ") || "Nenhum"}</p>
-        </li>
-      `).join("")}
-    </ul>
-  `;
-
-  // Criação dos botões de paginação
-  const totalPages = Math.ceil(cpfsData.length / resultsPerPage);
-  paginationDiv.innerHTML = "";
-
-  // Botão "Anterior"
-  const prevButton = document.createElement("button");
-  prevButton.innerText = "Anterior";
-  prevButton.id = "button-pagin-anterior";
-  prevButton.disabled = currentPage === 1;
-  prevButton.addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderResults();
+    if (currentResults.length === 0) {
+        resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
+        return;
     }
-  });
-  paginationDiv.appendChild(prevButton);
 
-  // Botões de números da página
-  for (let i = 1; i <= totalPages; i++) {
-    const pageButton = document.createElement("button");
-    pageButton.innerText = i;
-    pageButton.className = i === currentPage ? "active" : "";
-    pageButton.addEventListener("click", () => {
-      currentPage = i;
-      renderResults();
+    // Renderiza os resultados da página atual
+    resultDiv.innerHTML = `
+        <p style="color: green;">Consulta realizada com sucesso!</p>
+        
+        <ul id="cpf-list">
+            ${currentResults.map(cpfData => `
+                <li>
+                    <p><strong>CPF:</strong> ${cpfData.cpf}</p>
+                    <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
+                    <p><strong>Status:</strong> ${cpfData.status}</p>
+                    <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
+                    <p><strong>Erros:</strong> ${cpfData.erros?.join(", ") || "Nenhum"}</p>
+                </li>
+            `).join("")}
+        </ul>
+    `;
+
+    // Criação dos botões de paginação
+    const totalPages = Math.ceil(cpfsData.length / resultsPerPage);
+    paginationDiv.innerHTML = "";
+
+    // Botão "Anterior"
+    const prevButton = document.createElement("button");
+    prevButton.innerText = "Anterior";
+    prevButton.id = "button-pagin-anterior";
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener("click", () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderResults();
+        }
     });
-    paginationDiv.appendChild(pageButton);
-  }
+    paginationDiv.appendChild(prevButton);
 
-  // Botão "Próximo"
-  const nextButton = document.createElement("button");
-  nextButton.innerText = "Próximo";
-  nextButton.id = "button-pagin-proximo";
-  nextButton.disabled = currentPage === totalPages;
-  nextButton.addEventListener("click", () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderResults();
+    // Botões de números da página
+    for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement("button");
+        pageButton.innerText = i;
+        pageButton.className = i === currentPage ? "active" : "";
+        pageButton.addEventListener("click", () => {
+            currentPage = i;
+            renderResults();
+        });
+        paginationDiv.appendChild(pageButton);
     }
-  });
-  paginationDiv.appendChild(nextButton);
+
+    // Botão "Próximo"
+    const nextButton = document.createElement("button");
+    nextButton.innerText = "Próximo";
+    nextButton.id = "button-pagin-proximo";
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener("click", () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderResults();
+        }
+    });
+    paginationDiv.appendChild(nextButton);
+}
+
+// Adiciona evento ao campo de busca para filtrar múltiplos CPFs
+document.getElementById("searchCpf").addEventListener("input", function () {
+    const searchValue = this.value.trim();
+    if (searchValue === "") {
+        renderResults();
+        return;
+    }
+
+    const searchList = searchValue.split(",").map(cpf => cpf.trim());
+    const filteredResults = cpfsData.filter(cpfData => searchList.includes(cpfData.cpf));
+    displayFilteredResults(filteredResults);
+});
+
+// Função para exibir os resultados filtrados pelo campo de busca
+function displayFilteredResults(filteredResults) {
+    const resultDiv = document.getElementById('result');
+
+    if (filteredResults.length === 0) {
+        resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
+        return;
+    }
+
+    resultDiv.innerHTML = `
+        <p style="color: green;">Resultados filtrados:</p>
+        
+        <ul>
+            ${filteredResults.map(cpfData => `
+                <li>
+                    <p><strong>CPF:</strong> ${cpfData.cpf}</p>
+                    <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
+                    <p><strong>Status:</strong> ${cpfData.status}</p>
+                    <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
+                    <p><strong>Erros:</strong> ${cpfData.erros?.join(", ") || "Nenhum"}</p>
+                </li>
+            `).join("")}
+        </ul>
+    `;
+    /*document.getElementById('searchCpf').value = "";*/
+
 }

@@ -100,7 +100,8 @@
     color: #555;
     padding: 17px;
     width: 500px;
-    min-height: 28vh;
+    min-height: 34vh;
+    margin-top: 35px !important;
     background-color: #F9F9F9;
     border: 1px solid #ccc;
     border-radius: 5px;

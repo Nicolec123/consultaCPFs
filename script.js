@@ -353,77 +353,96 @@ document.getElementById('cnpjForm').addEventListener('submit', async (e) => {
 
 // Função para renderizar os resultados com paginação
 function renderResults() {
-    const resultDiv = document.getElementById('result');
-    const paginationDiv = document.getElementById('pagination');
+  const resultDiv = document.getElementById('result');
+  const paginationDiv = document.getElementById('pagination');
+  
+  let errosGerais = [];  // Para armazenar erros gerais que serão exibidos ao final
+  
+  // Calcula o início e o fim da página atual
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = startIndex + resultsPerPage;
+  const currentResults = cpfsData.slice(startIndex, endIndex); // Pega apenas os itens da página atual
 
-    // Calcula o início e o fim da página atual
-    const startIndex = (currentPage - 1) * resultsPerPage;
-    const endIndex = startIndex + resultsPerPage;
-    const currentResults = cpfsData.slice(startIndex, endIndex); // Pega apenas os itens da página atual
+  if (currentResults.length === 0) {
+      resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
+      return;
+  }
 
-    if (currentResults.length === 0) {
-        resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
-        return;
-    }
+  // Renderiza os resultados da página atual
+  let htmlContent = `
+      <p style="color: green;">Consulta realizada com sucesso!</p>
+      <ul id="cpf-list">
+  `;
 
-    // Renderiza os resultados da página atual
-    resultDiv.innerHTML = `
-        <p style="color: green;">Consulta realizada com sucesso!</p>
-        
-        <ul id="cpf-list">
-            ${currentResults.map(cpfData => `
-                <li>
-                    <p><strong>CPF:</strong> ${cpfData.cpf}</p>
-                    <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
-                    <p><strong>Status:</strong> ${cpfData.status}</p>
-                    <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
-                    <p><strong>Erros:</strong> ${cpfData.erros?.join(", ") || "Nenhum"}</p>
-                </li>
-            `).join("")}
-        </ul>
-    `;
+  currentResults.forEach(cpfData => {
+      // Se houver erro, armazene-o para exibição no final
+      if (cpfData.erro && cpfData.erro.length > 0) {
+          errosGerais = errosGerais.concat(cpfData.erro);
+      }
 
-    // Criação dos botões de paginação
-    const totalPages = Math.ceil(cpfsData.length / resultsPerPage);
-    paginationDiv.innerHTML = "";
+      htmlContent += `
+          <li>
+              <p><strong>CPF:</strong> ${cpfData.cpf}</p>
+              <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
+              <p><strong>Status:</strong> ${cpfData.status}</p>
+              <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
+          </li>
+      `;
+  });
 
-    // Botão "Anterior"
-    const prevButton = document.createElement("button");
-    prevButton.innerText = "Anterior";
-    prevButton.id = "button-pagin-anterior";
-    prevButton.disabled = currentPage === 1;
-    prevButton.addEventListener("click", () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderResults();
-        }
-    });
-    paginationDiv.appendChild(prevButton);
+  htmlContent += `</ul>`;
 
-    // Botões de números da página
-    for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement("button");
-        pageButton.innerText = i;
-        pageButton.className = i === currentPage ? "active" : "";
-        pageButton.addEventListener("click", () => {
-            currentPage = i;
-            renderResults();
-        });
-        paginationDiv.appendChild(pageButton);
-    }
+  // Exibe os erros gerais, se houver
+  if (errosGerais.length > 0) {
+      htmlContent += `
+          <p style="color: red;"><strong>Erros Gerais:</strong> ${errosGerais.join(", ")}</p>
+      `;
+  }
 
-    // Botão "Próximo"
-    const nextButton = document.createElement("button");
-    nextButton.innerText = "Próximo";
-    nextButton.id = "button-pagin-proximo";
-    nextButton.disabled = currentPage === totalPages;
-    nextButton.addEventListener("click", () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderResults();
-        }
-    });
-    paginationDiv.appendChild(nextButton);
+  // Atualiza o conteúdo do resultDiv
+  resultDiv.innerHTML = htmlContent;
+
+  // Criação dos botões de paginação
+  const totalPages = Math.ceil(cpfsData.length / resultsPerPage);
+  paginationDiv.innerHTML = "";
+
+  // Botão "Anterior"
+  const prevButton = document.createElement("button");
+  prevButton.innerText = "Anterior";
+  prevButton.id = "button-pagin-anterior";
+  prevButton.disabled = currentPage === 1;
+  prevButton.addEventListener("click", () => {
+      if (currentPage > 1) {
+          currentPage--;
+          renderResults();
+      }
+  });
+  paginationDiv.appendChild(prevButton);
+
+  // Botões de números da página
+  for (let i = 1; i <= totalPages; i++) {
+      const pageButton = document.createElement("button");
+      pageButton.innerText = i;
+      pageButton.className = i === currentPage ? "active" : "";
+      pageButton.addEventListener("click", () => {
+          currentPage = i;
+          renderResults();
+      });
+      paginationDiv.appendChild(pageButton);
+  }
+
+  // Botão "Próximo"
+  const nextButton = document.createElement("button");
+  nextButton.innerText = "Próximo";
+  nextButton.id = "button-pagin-proximo";
+  nextButton.disabled = currentPage === totalPages;
+  nextButton.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+          currentPage++;
+          renderResults();
+      }
+  });
+  paginationDiv.appendChild(nextButton);
 }
 
 // Adiciona evento ao campo de busca para filtrar múltiplos CPFs

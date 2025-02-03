@@ -197,21 +197,40 @@ async function createJwt(cnpj, cpfs) {
         console.error("Erro ao criar JWT:", error);
         throw new Error("Erro ao gerar o token de autenticação.");
       }
-    }// Função para consultar CPFs vinculados ao CNPJ
-async function consultarCpfs(cnpj, cpfs, authToken) {
-  // Validação de CNPJ antes de prosseguir
-  if (!validarCnpj(cnpj)) {
-    console.error("CNPJ inválido!");
-    alert("CNPJ inválido. Verifique os dados e tente novamente.");
-    return;
-  }
-
-  if (!cpfs || (Array.isArray(cpfs) && cpfs.length === 0)) {
-    console.error("Nenhum CPF fornecido ou CPF inválido!");
-    alert("Por favor, forneça pelo menos um CPF válido.");
-    return;
-  }
-
+    }
+// Função para consultar CPFs vinculados ao CNPJ
+ async function consultarCpfs(cnpj, cpfs, authToken) {
+        // Validação de CNPJ antes de prosseguir
+        if (!validarCnpj(cnpj)) {
+          console.error("CNPJ inválido!");
+          alert("CNPJ inválido. Verifique os dados e tente novamente.");
+          return;
+        }
+      
+        // Remover caracteres especiais do CNPJ antes de enviar
+        cnpj = cnpj.replace(/[^\d]/g, "");
+      
+        // Validação de cada CPF antes de prosseguir
+        if (Array.isArray(cpfs)) {
+          for (let i = 0; i < cpfs.length; i++) {
+            // Remove caracteres especiais de cada CPF
+            cpfs[i] = cpfs[i].replace(/[^\d]/g, "");
+            if (!validarCpf(cpfs[i])) {
+              console.error(`CPF inválido: ${cpfs[i]}`);
+              alert(`CPF inválido: ${cpfs[i]}. Verifique e tente novamente.`);
+              return;
+            }
+          }
+        } else {
+          // Remover caracteres especiais e validar o único CPF
+          cpfs = cpfs.replace(/[^\d]/g, "");
+          if (!validarCpf(cpfs)) {
+            console.error(`CPF inválido: ${cpfs}`);
+            alert(`CPF inválido: ${cpfs}. Verifique e tente novamente.`);
+            return;
+          }
+        }
+   
   // Criação do corpo da requisição com um único campo 'cpfs' 
   const requestBody = {
     documentoComprador: cnpj,

@@ -1,3 +1,98 @@
+// original
+
+// Função para renderizar os resultados com paginação
+function renderResults() {
+  const resultDiv = document.getElementById('result');
+  const paginationDiv = document.getElementById('pagination');
+
+  // Calcula o início e o fim da página atual
+  const startIndex = (currentPage - 1) * resultsPerPage;
+  const endIndex = startIndex + resultsPerPage;
+  const currentResults = cpfsData.slice(startIndex, endIndex); // Pega apenas os itens da página atual
+
+  if (currentResults.length === 0) {
+      resultDiv.innerHTML = "<p>Nenhum CPF encontrado.</p>";
+      return;
+  }
+
+  // Renderiza os resultados da página atual
+  resultDiv.innerHTML = `
+      <p style="color: green;">Consulta realizada com sucesso!</p>
+      
+      <ul id="cpf-list">
+          ${currentResults.map(cpfData => `
+              <li>
+                  <p><strong>CPF:</strong> ${cpfData.cpf}</p>
+                  <p><strong>Erro:</strong> ${cpfData.erro?.join(", ") || "Nenhum"}</p>
+                  <p><strong>Status:</strong> ${cpfData.status}</p>
+                  <p><strong>Status Mídia:</strong> ${cpfData.statusMidia}</p>
+                  <p><strong>Erros:</strong> ${cpfData.erros?.join(", ") || "Nenhum"}</p>
+              </li>
+          `).join("")}
+      </ul>
+  `;
+
+  // Criação dos botões de paginação
+  const totalPages = Math.ceil(cpfsData.length / resultsPerPage);
+  paginationDiv.innerHTML = "";
+
+  // Botão "Anterior"
+  const prevButton = document.createElement("button");
+  prevButton.innerText = "Anterior";
+  prevButton.id = "button-pagin-anterior";
+  prevButton.disabled = currentPage === 1;
+  prevButton.addEventListener("click", () => {
+      if (currentPage > 1) {
+          currentPage--;
+          renderResults();
+      }
+  });
+  paginationDiv.appendChild(prevButton);
+
+  // Botões de números da página
+  for (let i = 1; i <= totalPages; i++) {
+      const pageButton = document.createElement("button");
+      pageButton.innerText = i;
+      pageButton.className = i === currentPage ? "active" : "";
+      pageButton.addEventListener("click", () => {
+          currentPage = i;
+          renderResults();
+      });
+      paginationDiv.appendChild(pageButton);
+  }
+
+  // Botão "Próximo"
+  const nextButton = document.createElement("button");
+  nextButton.innerText = "Próximo";
+  nextButton.id = "button-pagin-proximo";
+  nextButton.disabled = currentPage === totalPages;
+  nextButton.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+          currentPage++;
+          renderResults();
+      }
+  });
+  paginationDiv.appendChild(nextButton);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Função para renderizar os resultados com paginação
 function renderResults() {
   const resultDiv = document.getElementById('result');
